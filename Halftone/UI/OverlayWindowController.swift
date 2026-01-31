@@ -111,13 +111,6 @@ class OverlayWindowController: NSObject {
             }
         }
 
-        // Safety timeout: auto-disable after 30 seconds for debugging
-        DispatchQueue.main.asyncAfter(deadline: .now() + 30) { [weak self] in
-            if AppState.shared.isEnabled {
-                print("DEBUG: Safety timeout - disabling effect")
-                AppState.shared.isEnabled = false
-            }
-        }
     }
 
     /// Hide the overlay and stop capturing
