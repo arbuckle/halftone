@@ -10,7 +10,7 @@ These days, our computer representations of visual imagery are so perfect and ac
 
 This project doesn't achieve that. What it does achieve is a sort of visually interesting effect for about five minutes. I recorded a brief video to demonstrate:
 
-<video src="media/halftone_demo.mp4" controls width="100%"></video>
+https://github.com/user-attachments/assets/5bb4154d-37a1-4e0a-bdef-d786ebefc394
 
 The effect is achieved using the Metal graphics APIs provided by OSX. These are described in a docment at HALFTONES.md, that I believe to be no more than 10% hallucinated. Run the app with `make run` and a little control panel will show up in the toolbar. It'll need permission to screen share, and it will mess up the presentation of any liquid glass components, but you'll get a sort of halftone effect. As with everything digital, something is lost relative to the real world artifact it is attempting to replicate. 
 
