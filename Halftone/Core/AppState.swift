@@ -43,6 +43,7 @@ class AppState {
         static let isEnabled = "halftone.isEnabled"
         static let dotSizePreset = "halftone.dotSizePreset"
         static let intensity = "halftone.intensity"
+        static let useBlackOnly = "halftone.useBlackOnly"
     }
 
     // MARK: - Properties
@@ -78,6 +79,15 @@ class AppState {
         }
     }
 
+    var useBlackOnly: Bool {
+        didSet {
+            if oldValue != useBlackOnly {
+                save()
+                notifyChange()
+            }
+        }
+    }
+
     /// Current dot size in pixels
     var dotSize: Float {
         return dotSizePreset.dotSize
@@ -90,6 +100,7 @@ class AppState {
 
         self.isEnabled = defaults.bool(forKey: Keys.isEnabled)
         self.dotSizePreset = DotSizePreset(rawValue: defaults.integer(forKey: Keys.dotSizePreset)) ?? .medium
+        self.useBlackOnly = defaults.bool(forKey: Keys.useBlackOnly)
 
         // Default intensity to 1.0 if not set
         if defaults.object(forKey: Keys.intensity) != nil {
@@ -106,6 +117,7 @@ class AppState {
         defaults.set(isEnabled, forKey: Keys.isEnabled)
         defaults.set(dotSizePreset.rawValue, forKey: Keys.dotSizePreset)
         defaults.set(intensity, forKey: Keys.intensity)
+        defaults.set(useBlackOnly, forKey: Keys.useBlackOnly)
     }
 
     private func notifyChange() {

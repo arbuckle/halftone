@@ -17,6 +17,7 @@ class StatusBarController: NSObject {
     private var fineItem: NSMenuItem?
     private var mediumItem: NSMenuItem?
     private var coarseItem: NSMenuItem?
+    private var blackOnlyItem: NSMenuItem?
 
     override init() {
         super.init()
@@ -81,6 +82,12 @@ class StatusBarController: NSObject {
         dotSizeItem.submenu = dotSizeMenu
         menu.addItem(dotSizeItem)
 
+        // Black Only toggle
+        let blackOnlyItem = NSMenuItem(title: "Black Only", action: #selector(toggleBlackOnly), keyEquivalent: "")
+        blackOnlyItem.target = self
+        menu.addItem(blackOnlyItem)
+        self.blackOnlyItem = blackOnlyItem
+
         menu.addItem(NSMenuItem.separator())
 
         // Intensity slider (using custom view)
@@ -121,6 +128,10 @@ class StatusBarController: NSObject {
         AppState.shared.dotSizePreset = .coarse
     }
 
+    @objc private func toggleBlackOnly() {
+        AppState.shared.useBlackOnly.toggle()
+    }
+
     @objc private func quit() {
         NSApplication.shared.terminate(nil)
     }
@@ -138,6 +149,9 @@ class StatusBarController: NSObject {
         fineItem?.state = state.dotSizePreset == .fine ? .on : .off
         mediumItem?.state = state.dotSizePreset == .medium ? .on : .off
         coarseItem?.state = state.dotSizePreset == .coarse ? .on : .off
+
+        // Update black only checkmark
+        blackOnlyItem?.state = state.useBlackOnly ? .on : .off
 
         // Update status item icon
         if let button = statusItem?.button {

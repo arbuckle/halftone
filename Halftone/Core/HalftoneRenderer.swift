@@ -19,7 +19,7 @@ class HalftoneRenderer: NSObject {
     private var screenTexture: MTLTexture?
 
     // Uniform data
-    private var uniforms = HalftoneUniforms(dotSize: 8.0, intensity: 1.0, screenSize: SIMD2<Float>(0, 0))
+    private var uniforms = HalftoneUniforms(dotSize: 8.0, intensity: 1.0, screenSize: SIMD2<Float>(0, 0), useBlackOnly: 0)
 
     init?(device: MTLDevice) {
         self.device = device
@@ -137,6 +137,7 @@ extension HalftoneRenderer: MTKViewDelegate {
         uniforms.dotSize = state.dotSize
         uniforms.intensity = state.intensity
         uniforms.screenSize = SIMD2<Float>(Float(view.drawableSize.width), Float(view.drawableSize.height))
+        uniforms.useBlackOnly = state.useBlackOnly ? 1 : 0
 
         if Self.drawCount % 30 == 1 {
             print("DEBUG: draw #\(Self.drawCount) - screenSize: \(uniforms.screenSize), dotSize: \(uniforms.dotSize), intensity: \(uniforms.intensity)")

@@ -65,13 +65,19 @@ float2 rotatePoint(float2 p, float angle) {
     return float2(p.x * c - p.y * s, p.x * s + p.y * c);
 }
 
+// Highlight threshold - no dots below this density (authentic Dmin behavior)
+constant float kHighlightThreshold = 0.08;
+
 // Calculate halftone dot intensity for a single channel
 // Returns 1.0 if pixel is inside dot, 0.0 if outside
 float halftoneChannel(float2 pixelPos, float channelValue, float dotSize, float angle) {
-    // Skip if no ink needed
-    if (channelValue < 0.01) {
+    // No dots in highlights (authentic Dmin behavior - "white paper" showing)
+    if (channelValue < kHighlightThreshold) {
         return 0.0;
     }
+
+    // Remap remaining range for smoother transition from threshold
+    float adjusted = (channelValue - kHighlightThreshold) / (1.0 - kHighlightThreshold);
 
     // Rotate coordinate system for this channel's angle
     float2 rotatedPos = rotatePoint(pixelPos, angle);
@@ -83,15 +89,20 @@ float halftoneChannel(float2 pixelPos, float channelValue, float dotSize, float 
     float2 delta = rotatedPos - cellPos;
     float dist = length(delta);
 
-    // Dot radius based on channel value (more ink = larger dot)
+    // Dot radius based on adjusted channel value (more ink = larger dot)
     // sqrt gives perceptually linear scaling
     float maxRadius = dotSize * 0.5;
-    float dotRadius = maxRadius * sqrt(channelValue);
+    float dotRadius = maxRadius * sqrt(adjusted);
 
     // Anti-aliased edge - solid dot (1.0 inside, 0.0 outside)
     float edge = smoothstep(dotRadius + 0.5, dotRadius - 0.5, dist);
 
-    return edge;  // Solid dots - size varies, not intensity
+    // Letterpress halo effect: dark ring with lighter center
+    // This mimics ink being pushed outward under pressure
+    float centerDist = dist / max(dotRadius, 0.001);  // Avoid division by zero
+    float halo = smoothstep(0.3, 0.9, centerDist) * 0.25;
+
+    return edge * (1.0 + halo);  // Slightly darker at edges
 }
 
 // Fragment shader - applies CMYK halftone effect
@@ -107,20 +118,35 @@ fragment float4 fragmentShader(VertexOut in [[stage_in]],
         return screenColor;
     }
 
-    // Convert to CMYK
-    float4 cmyk = rgbToCmyk(screenColor.rgb);
-
     // Get pixel position in screen coordinates
     float2 pixelPos = in.texCoord * uniforms.screenSize;
 
-    // Apply halftone pattern to each CMYK channel with different angles
-    float c = halftoneChannel(pixelPos, cmyk.x, uniforms.dotSize, kCyanAngle);
-    float m = halftoneChannel(pixelPos, cmyk.y, uniforms.dotSize, kMagentaAngle);
-    float y = halftoneChannel(pixelPos, cmyk.z, uniforms.dotSize, kYellowAngle);
-    float k = halftoneChannel(pixelPos, cmyk.w, uniforms.dotSize, kBlackAngle);
+    float3 halftoneRgb;
 
-    // Convert halftoned CMYK back to RGB
-    float3 halftoneRgb = cmykToRgb(float4(c, m, y, k));
+    if (uniforms.useBlackOnly != 0) {
+        // Black-only mode: newspaper-style using only K channel
+        // Convert to grayscale using luminance weights
+        float gray = dot(screenColor.rgb, float3(0.299, 0.587, 0.114));
+        float k = 1.0 - gray;  // Darkness value
+
+        float kHalftone = halftoneChannel(pixelPos, k, uniforms.dotSize, kBlackAngle);
+
+        // White paper minus black dots
+        halftoneRgb = float3(1.0 - kHalftone);
+    } else {
+        // Full CMYK mode
+        // Convert to CMYK
+        float4 cmyk = rgbToCmyk(screenColor.rgb);
+
+        // Apply halftone pattern to each CMYK channel with different angles
+        float c = halftoneChannel(pixelPos, cmyk.x, uniforms.dotSize, kCyanAngle);
+        float m = halftoneChannel(pixelPos, cmyk.y, uniforms.dotSize, kMagentaAngle);
+        float y = halftoneChannel(pixelPos, cmyk.z, uniforms.dotSize, kYellowAngle);
+        float k = halftoneChannel(pixelPos, cmyk.w, uniforms.dotSize, kBlackAngle);
+
+        // Convert halftoned CMYK back to RGB
+        halftoneRgb = cmykToRgb(float4(c, m, y, k));
+    }
 
     // Blend with original based on intensity
     float3 finalRgb = mix(screenColor.rgb, halftoneRgb, uniforms.intensity);

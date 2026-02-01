@@ -32,6 +32,7 @@ typedef struct {
     float dotSize;          // Size of halftone dots in pixels
     float intensity;        // Effect intensity (0.0 = off, 1.0 = full)
     vector_float2 screenSize;  // Screen dimensions in pixels
+    uint32_t useBlackOnly;  // Use only black channel (newspaper-style), 0 = false, non-zero = true
 } HalftoneUniforms;
 
 #endif /* ShaderTypes_h */
